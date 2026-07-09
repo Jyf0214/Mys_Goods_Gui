@@ -45,3 +45,6 @@ desktop.ini
 *.tmp
 /tmp/
 code.png
+.qwen/*
+.qwen/**/*
+QWEN.md
