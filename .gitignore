@@ -2,6 +2,11 @@
 pyqt_app/data/
 pyqt_app/logs/
 
+# Flask 网页版数据
+web_app/data/
+web_app/logs/
+web_app/__pycache__/
+
 pyqt_app/utils/ext_utils.py
 
 # Python

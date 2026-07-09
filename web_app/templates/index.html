@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>米游社商品兑换助手 - 网页版</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- 顶部状态栏 -->
+    <div id="statusBar" class="status-bar status-error">
+        <span id="statusText">未登录</span>
+    </div>
+
+    <!-- 标签页导航 -->
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="login">登录</button>
+        <button class="tab-btn" data-tab="goods" disabled>商品列表</button>
+        <button class="tab-btn" data-tab="tasks" disabled>任务管理</button>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 登录页 -->
+        <div id="tab-login" class="tab-panel active">
+            <div class="login-tabs">
+                <button class="login-tab-btn active" data-login-tab="qr">扫码登录</button>
+                <button class="login-tab-btn" data-login-tab="manual">手动登录</button>
+            </div>
+
+            <!-- 扫码登录 -->
+            <div id="login-qr" class="login-panel active">
+                <p class="login-info">使用米游社 App 扫描二维码登录</p>
+                <div class="qr-container">
+                    <div id="qrPlaceholder" class="qr-placeholder">点击下方按钮生成二维码</div>
+                    <img id="qrImage" class="qr-image" style="display:none;">
+                </div>
+                <button id="generateQrBtn" class="btn btn-primary" onclick="generateQR()">生成二维码</button>
+                <p id="qrStatus" class="qr-status"></p>
+            </div>
+
+            <!-- 手动登录 -->
+            <div id="login-manual" class="login-panel">
+                <div class="login-info manual-info">
+                    手动登录说明：<br>
+                    1. 打开米游社网页版并登录<br>
+                    2. 按 F12 打开开发者工具<br>
+                    3. 在 Console 中输入: <code>document.cookie</code><br>
+                    4. 复制完整的 Cookie 字符串粘贴到下方
+                </div>
+                <label class="form-label">Cookie:</label>
+                <textarea id="cookieInput" class="form-textarea" placeholder="粘贴完整的 Cookie 字符串..." rows="4"></textarea>
+                <button class="btn btn-primary" onclick="manualLogin()">登录</button>
+            </div>
+        </div>
+
+        <!-- 商品页 -->
+        <div id="tab-goods" class="tab-panel">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <label class="form-label">选择游戏:</label>
+                    <select id="gameSelect" class="form-select" onchange="loadGoods()">
+                        <option value="">加载中...</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="loadGoods()">刷新</button>
+                </div>
+                <div class="toolbar-right">
+                    <span id="pointsLabel" class="points-label">米游币: --</span>
+                </div>
+            </div>
+
+            <div class="goods-table-container">
+                <table class="data-table" id="goodsTable">
+                    <thead>
+                        <tr>
+                            <th class="col-icon">图标</th>
+                            <th class="col-name">商品名称</th>
+                            <th class="col-price">价格</th>
+                            <th class="col-time">兑换时间</th>
+                            <th class="col-action">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="goodsBody">
+                        <tr><td colspan="5" class="empty-row">请选择游戏加载商品</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="toolbar" style="margin-top: 12px;">
+                <button class="btn btn-danger" onclick="clearWishlist()">清空心愿单</button>
+            </div>
+        </div>
+
+        <!-- 任务页 -->
+        <div id="tab-tasks" class="tab-panel">
+            <div class="toolbar">
+                <button class="btn btn-success" onclick="showCreateTaskDialog()">创建任务</button>
+                <button class="btn btn-secondary" onclick="loadTasks()">刷新</button>
+                <button class="btn btn-danger" onclick="clearTasks()">清空任务列表</button>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table" id="taskTable">
+                    <thead>
+                        <tr>
+                            <th class="col-tname">任务名称</th>
+                            <th class="col-ttime">兑换时间</th>
+                            <th class="col-tcount">请求次数</th>
+                            <th class="col-tstatus">状态</th>
+                            <th class="col-taction">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskBody">
+                        <tr><td colspan="5" class="empty-row">暂无任务</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 日志区域 -->
+            <div class="log-section">
+                <div class="log-header">任务日志</div>
+                <div id="logView" class="log-view"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部栏 -->
+    <div class="bottom-bar">
+        <button class="btn btn-secondary" onclick="checkLoginStatus()">刷新状态</button>
+        <button class="btn btn-secondary" onclick="viewLogs()">查看日志</button>
+        <button class="btn btn-secondary" onclick="showAbout()">关于</button>
+    </div>
+
+    <!-- 创建任务对话框 -->
+    <div id="createTaskModal" class="modal-overlay" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>创建任务</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">任务名称：</label>
+                    <input type="text" id="taskName" class="form-input" placeholder="请输入任务名称">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">选择商品：</label>
+                    <select id="taskGoods" class="form-select" onchange="onTaskGoodsChanged()">
+                        <option value="">加载中...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">收货地址：</label>
+                    <select id="taskAddress" class="form-select">
+                        <option value="">加载中...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">兑换时间：</label>
+                    <input type="datetime-local" id="taskTime" class="form-input" step="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">请求次数：</label>
+                    <input type="number" id="taskCount" class="form-input" value="5" min="1" max="20">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="createTask()">创建</button>
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志查看对话框 -->
+    <div id="logModal" class="modal-overlay" style="display:none;">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3>日志查看</h3>
+                <button class="modal-close" onclick="closeLogModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="logContent" class="form-textarea log-content" readonly rows="20"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="loadLogContent()">刷新</button>
+                <button class="btn btn-danger" onclick="clearLogFile()">清空日志</button>
+                <button class="btn btn-secondary" onclick="closeLogModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关于对话框 -->
+    <div id="aboutModal" class="modal-overlay" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>关于</h3>
+                <button class="modal-close" onclick="closeAboutModal()">&times;</button>
+            </div>
+            <div class="modal-body about-content">
+                <p><strong>米游社商品兑换助手 v2.0</strong></p>
+                <p>网页版 (Flask)</p>
+                <p>作者: mxyooR</p>
+                <p>仅供学习使用，请勿用于非法用途</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAboutModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

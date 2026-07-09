@@ -1,6 +1,28 @@
 # Mys Goods GUI
 
-一个基于 PyQt6 的桌面应用，用于自动兑换米游社商品。
+米游社商品兑换助手，支持 PyQt6 桌面版和 Flask 网页版两种界面。
+
+## 分支说明
+
+本仓库为 [mxyooR/Mys_Goods_Gui](https://github.com/mxyooR/Mys_Goods_Gui) 的 fork 分支，由下游作者 **Jyf0214** 维护。
+
+| | 上游仓库 | 本仓库（fork） |
+|---|---|---|
+| 作者 | mxyooR | Jyf0214 |
+| 仓库 | `mxyooR/Mys_Goods_Gui` | `Jyf0214/Mys_Goods_Gui` |
+| 界面 | PyQt6 桌面版 | PyQt6 桌面版 + Flask 网页版 |
+
+本 fork 在上游基础上新增了 **Flask 网页 GUI**，可直接通过浏览器访问，无需安装桌面环境。
+
+## 功能特性
+
+- **扫码登录** — 使用米游社 App 扫描二维码快速登录
+- **手动登录** — 通过粘贴 Cookie 手动登录
+- **商品浏览** — 按游戏分类浏览商品，查看价格和兑换时间
+- **心愿单** — 将感兴趣的商品加入心愿单
+- **定时兑换** — 创建兑换任务，设置精确兑换时间和请求次数
+- **NTP 时间同步** — 使用 NTP 服务器校准时间，确保精确兑换
+- **双界面支持** — PyQt6 桌面版 + Flask 网页版，功能一致
 
 ## 写在前面
 
@@ -14,12 +36,39 @@
 - Python 3.11+
 - pip
 
-### 安装步骤
+---
+
+### 方式一：Flask 网页版（推荐，无需桌面环境）
 
 1. 克隆本仓库：
 
 ```bash
-git clone https://github.com/mxyooR/Mys_Goods_Gui
+git clone https://github.com/Jyf0214/Mys_Goods_Gui.git
+cd Mys_Goods_Gui/web_app
+```
+
+2. 安装依赖：
+
+```bash
+pip install -r requirements_web.txt
+```
+
+3. 启动服务：
+
+```bash
+python app.py
+```
+
+4. 浏览器打开 `http://localhost:5000`
+
+---
+
+### 方式二：PyQt6 桌面版
+
+1. 克隆本仓库：
+
+```bash
+git clone https://github.com/Jyf0214/Mys_Goods_Gui.git
 cd Mys_Goods_Gui/pyqt_app
 ```
 
@@ -69,10 +118,10 @@ python main.py
 
 ### 4. 数据管理
 
-所有数据保存在程序目录下：
+**网页版**数据保存在 `web_app/data/`，**桌面版**数据保存在 `pyqt_app/data/`：
 
 ```
-pyqt_app/
+web_app/              # 或 pyqt_app/
 ├── data/
 │   ├── config.json    # 登录配置
 │   ├── tasks.json     # 任务列表
@@ -85,12 +134,17 @@ pyqt_app/
 
 ## 技术栈
 
-### PyQt6 版本
-- **PyQt6** - 现代化的 GUI 框架
-- **httpx** - 异步 HTTP 客户端
-- **ntplib** - NTP 时间同步
-- **qrcode** - 二维码生成
-- **asyncio** - 异步任务调度
+### Flask 网页版
+- **Flask** + **Flask-SocketIO** — Web 框架 + 实时通信
+- **httpx** / **requests** — HTTP 客户端
+- **ntplib** — NTP 时间同步
+- **qrcode** — 二维码生成
+
+### PyQt6 桌面版
+- **PyQt6** — 桌面 GUI 框架
+- **httpx** — 异步 HTTP 客户端
+- **ntplib** — NTP 时间同步
+- **qrcode** — 二维码生成
 
 
 
