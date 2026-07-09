@@ -191,6 +191,9 @@ function startQRCheck(ticket) {
                 document.getElementById('generateQrBtn').disabled = false;
                 document.getElementById('generateQrBtn').textContent = '生成二维码';
                 checkLoginStatus();
+                // 登录后刷新商品数据
+                loadGames();
+                setTimeout(function () { loadGoods(); }, 500);
                 // 切换到商品页
                 switchTab('goods');
             } else if (data.status === 'error') {
@@ -221,6 +224,9 @@ function manualLogin() {
         if (data.success) {
             showToast('登录成功！', 'success');
             checkLoginStatus();
+            // 登录后刷新商品数据
+            loadGames();
+            setTimeout(function () { loadGoods(); }, 500);
             switchTab('goods');
         } else {
             showToast(data.message || '登录失败', 'error');
@@ -521,6 +527,8 @@ function onTaskGoodsChanged() {
     if (isNaN(index) || !wishlistData[index]) return;
 
     var item = wishlistData[index];
+    // 自动填充任务名称为商品名称
+    document.getElementById('taskName').value = item.name || '';
     if (item.time) {
         // 转换时间格式
         var dt = item.time.replace(' ', 'T');

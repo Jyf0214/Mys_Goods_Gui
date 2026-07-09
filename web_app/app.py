@@ -423,6 +423,9 @@ def api_goods(game_key):
 def api_points():
     """获取米游币数量"""
     cookies = storage.get_cookies()
+    if not cookies or 'account_id' not in cookies:
+        return jsonify({'success': False, 'message': '未登录', 'points': 0})
+
     cookie_str = WebAuthService.cookies_to_string(cookies)
 
     points = goods_service.get_user_points(cookie_str)
@@ -606,4 +609,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"启动网页版米游社商品兑换助手")
     print(f"访问地址: http://localhost:{port}")
-    socketio.run(app, host='0.0.0.0', port=port, debug=False)
+    socketio.run(app, host='127.0.0.1', port=port, debug=False, allow_unsafe_werkzeug=True)

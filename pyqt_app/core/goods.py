@@ -86,11 +86,12 @@ class GoodsService:
         }
     
     def _timestamp_to_date(self, timestamp, format='%Y-%m-%d %H:%M:%S') -> Optional[str]:
-        """时间戳转日期字符串"""
+        """时间戳转北京时间字符串"""
         if timestamp is None:
             return None
         try:
-            dt = datetime.fromtimestamp(int(str(timestamp)))
+            from datetime import timezone, timedelta
+            dt = datetime.fromtimestamp(int(str(timestamp)), tz=timezone(timedelta(hours=8)))
             return dt.strftime(format)
         except (ValueError, TypeError):
             return None
